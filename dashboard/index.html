@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0b1320">
+    <meta name="description" content="Live temperature, humidity, and MQ-135 sensor readings from an ESP32 indoor monitor.">
+    <title>Air Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Air Monitor home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M6 12h12.5a3.5 3.5 0 1 0-3.4-4.3M6 17h18a3 3 0 1 1-2.9 3.8M6 22h8.5a2.5 2.5 0 1 1-2.4 3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <span>air<span class="brand-light">monitor</span></span>
+        </a>
+        <div class="topbar-right">
+          <span id="connection" class="connection"><span class="connection-dot"></span><span id="connection-text">Connecting</span></span>
+          <button id="sign-out" class="text-button hidden" type="button">Sign out</button>
+        </div>
+      </header>
+
+      <section class="intro">
+        <div>
+          <p class="eyebrow">INDOOR ENVIRONMENT</p>
+          <h1>Room overview</h1>
+          <p class="intro-copy">Live readings from your ESP32 air monitor.</p>
+        </div>
+        <div class="last-update">
+          <span class="eyebrow">LAST SAMPLE</span>
+          <time id="last-update" datetime="">Waiting for data</time>
+        </div>
+      </section>
+
+      <section id="notice" class="notice" role="status" aria-live="polite">
+        <span id="notice-icon" class="notice-icon" aria-hidden="true">i</span>
+        <span id="notice-text">Loading Firebase configuration…</span>
+      </section>
+
+      <section id="sign-in-panel" class="sign-in-panel hidden" aria-labelledby="sign-in-title">
+        <div class="sign-in-copy">
+          <p class="eyebrow">SECURE CONNECTION</p>
+          <h2 id="sign-in-title">Sign in to your monitor</h2>
+          <p>Use the Firebase Email/Password account authorized for this project.</p>
+        </div>
+        <form id="sign-in-form" class="sign-in-form">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="username" required>
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <button id="sign-in-button" class="primary-button" type="submit">Sign in</button>
+          <p id="sign-in-error" class="form-error" role="alert"></p>
+        </form>
+      </section>
+
+      <section id="dashboard" class="dashboard hidden" aria-label="Sensor readings">
+        <div class="metrics">
+          <article class="metric-card temperature">
+            <div class="metric-heading">
+              <span class="metric-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M14 14.76V5a2 2 0 0 0-4 0v9.76a4 4 0 1 0 4 0Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 12v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              </span>
+              <span class="metric-label">TEMPERATURE</span>
+            </div>
+            <p class="metric-value"><span id="temperature">--</span><span class="metric-unit">°C</span></p>
+            <p id="temperature-state" class="metric-footnote">Waiting for a valid DHT22 sample</p>
+          </article>
+
+          <article class="metric-card humidity">
+            <div class="metric-heading">
+              <span class="metric-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5s6.5 7.1 6.5 11.4a6.5 6.5 0 1 1-13 0C5.5 10.6 12 3.5 12 3.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 16a3 3 0 0 0 3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              </span>
+              <span class="metric-label">HUMIDITY</span>
+            </div>
+            <p class="metric-value"><span id="humidity">--</span><span class="metric-unit">%</span></p>
+            <p id="humidity-state" class="metric-footnote">Waiting for a valid DHT22 sample</p>
+          </article>
+
+          <article class="metric-card air">
+            <div class="metric-heading">
+              <span class="metric-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M4 8h11a3 3 0 1 0-2.9-3.8M4 12h15a2.5 2.5 0 1 1-2.4 3.2M4 16h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              </span>
+              <span class="metric-label">MQ-135 SIGNAL</span>
+            </div>
+            <p class="metric-value"><span id="mq135-raw">--</span><span class="metric-unit metric-unit-small">ADC</span></p>
+            <div class="signal-track" aria-label="ADC signal level"><span id="signal-bar"></span></div>
+            <p id="signal-label" class="metric-footnote">Relative sensor signal · not calibrated</p>
+          </article>
+        </div>
+
+        <section class="control-card" aria-labelledby="led-title">
+          <div class="control-copy">
+            <span class="control-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 22h4M8.5 14.5a6 6 0 1 1 7 0c-.8.6-1.5 1.5-1.5 2.5h-4c0-1-.7-1.9-1.5-2.5Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <h2 id="led-title">Monitor LED</h2>
+              <p id="led-state" class="control-state">Waiting for device status</p>
+            </div>
+          </div>
+          <button id="led-toggle" class="toggle" type="button" role="switch" aria-checked="false" aria-label="Switch monitor LED" disabled>
+            <span class="toggle-knob"></span>
+          </button>
+        </section>
+
+        <p class="safety-note"><span aria-hidden="true">!</span> MQ-135 values are raw, uncalibrated sensor readings—not ppm, a standardized AQI, or a safety alarm.</p>
+      </section>
+
+      <footer class="footer"><span>ESP32 · DHT22 · MQ-135</span><span>Firebase Realtime Database</span></footer>
+    </main>
+  </body>
+</html>
