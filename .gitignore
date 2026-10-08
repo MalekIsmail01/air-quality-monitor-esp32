@@ -1,0 +1,11 @@
+# Local device credentials
+firmware/include/secrets.h
+
+# Local Firebase web configuration
+dashboard/firebase-config.js
+
+# Build outputs and local tooling
+.pio/
+.vscode/
+__pycache__/
+*.py[cod]
